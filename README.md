@@ -17,4 +17,5 @@ Overview goes like this
   * Neural networks (including rnn, cnn)
 * By metrics
 * Implementation of the model which has the greatest score
-* comparing with the package and myModel(custom)
+* Comparing with the package and myModel(custom)
+* Apply greater model by customized class from latest sota paper and comparing with the earlier model
