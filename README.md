@@ -10,8 +10,8 @@ Overview goes like this
 * Parsing Dataset from **_torchvision_**
 * Preprocessing
 * model comparison
-  * Svm
-  * Decision tree
+  * Svm with OVR?
+  * Decision tree - DONE
   * Random forest
   * Ensemble model
   * Neural networks (including rnn, cnn)
@@ -19,3 +19,20 @@ Overview goes like this
 * Implementation of the model which has the greatest score
 * Comparing with the package and myModel(custom)
 * Apply greater model by customized class from latest sota paper and comparing with the earlier model
+* expansion model
+  * VGG16
+  * RESNET18
+  * MobileNet2
+  * SimpleDLA
+  * DLA
+* Apply Wandb
+
+
+<hr>
+
+* TODO:
+  * Apply Grey scale conversion
+  * Normalization
+  * Data Augmentation
+  * Image standardization
+
