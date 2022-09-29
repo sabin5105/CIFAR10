@@ -10,10 +10,10 @@ Overview goes like this
 * Parsing Dataset from **_torchvision_**
 * Preprocessing
 * model comparison
-  * Svm with OVR?
+  * Svm with OVR - DONE
   * Decision tree - DONE
-  * Random forest
-  * Ensemble model
+  * Random forest - DONE
+  * Ensemble model - DONE with Random forest
   * Neural networks (including rnn, cnn)
 * By metrics
 * Implementation of the model which has the greatest score
