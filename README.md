@@ -13,6 +13,7 @@ Overview goes like this
   * Svm with OVR - DONE
   * Decision tree - DONE
   * Random forest - DONE
+  * Logistic regression
   * Ensemble model - DONE with Random forest
   * Neural networks (including rnn, cnn)
 * By metrics
