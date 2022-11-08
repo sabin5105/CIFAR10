@@ -1,8 +1,6 @@
 # CIFAR10
 This is ML, Seoultech Academic course, project repository
 
-I'm gonna update the README.md soon
-
 <hr>
 
 Overview goes like this
@@ -28,12 +26,11 @@ Overview goes like this
   * DLA
 * Apply Wandb
 
-
 <hr>
 
 * TODO:
+  * Clustering
   * Apply Grey scale conversion
   * Normalization
   * Data Augmentation
   * Image standardization
-
