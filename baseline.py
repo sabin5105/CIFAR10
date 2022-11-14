@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
 from sklearn.metrics import *
