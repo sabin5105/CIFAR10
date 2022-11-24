@@ -16,7 +16,6 @@ Overview goes like this
   * Neural networks
 * By metrics
 * Implementation of the model which has the greatest score
-* Comparing with the package and myModel(custom)
 * Apply greater model by customized class from latest sota paper and comparing with the earlier model
 * expansion model
   * VGG16 - DONE
