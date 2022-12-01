@@ -1,9 +1,12 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import DataLoader
 
 import torchvision
 import torchvision.transforms as transforms
@@ -20,7 +23,7 @@ import wandb
 writer = SummaryWriter() # for tensorboard
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+parser.add_argument('--lr', default=0.0001, type=float, help='learning rate') # backbone - set small as much when using backbone
 parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
 args = parser.parse_args()
@@ -31,30 +34,43 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 # Data
 print('==> Preparing data..')
-transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-])
 
-transform_test = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-])
+# DATA
+def get_mean(dataset):
+  meanRGB = [np.mean(image.numpy(), axis=(1,2)) for image,_ in dataset]
+  meanR = np.mean([m[0] for m in meanRGB])
+  meanG = np.mean([m[1] for m in meanRGB])
+  meanB = np.mean([m[2] for m in meanRGB])
+  return [meanR, meanG, meanB]
 
-trainset = torchvision.datasets.CIFAR10(
-    root='./data', train=True, download=True, transform=transform_train)
-trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=128, shuffle=True, num_workers=16)
+def get_std(dataset):
+  stdRGB = [np.std(image.numpy(), axis=(1,2)) for image,_ in dataset]
+  stdR = np.mean([s[0] for s in stdRGB])
+  stdG = np.mean([s[1] for s in stdRGB])
+  stdB = np.mean([s[2] for s in stdRGB])
+  return [stdR, stdG, stdB]
 
-testset = torchvision.datasets.CIFAR10(
-    root='./data', train=False, download=True, transform=transform_test)
-testloader = torch.utils.data.DataLoader(
-    testset, batch_size=100, shuffle=False, num_workers=16)
+train_dataset = torchvision.datasets.CIFAR10('./data', train=True, download=True, transform=transforms.ToTensor())
+test_dataset = torchvision.datasets.CIFAR10('./data', train=False, download=True, transform=transforms.ToTensor())
 
+# data augmentation 진행 X -> data augmentation 진행하면 mean, std가 달라짐
+train_transforms = transforms.Compose([transforms.Resize((128, 128)),
+                                       transforms.ToTensor(),
+                                       transforms.Normalize(get_mean(train_dataset), get_std(train_dataset))])
+test_transforms = transforms.Compose([transforms.Resize((128, 128)),
+                                      transforms.ToTensor(),
+                                      transforms.Normalize(get_mean(test_dataset), get_std(test_dataset))])
+                                      
 classes = ('plane', 'car', 'bird', 'cat', 'deer',
            'dog', 'frog', 'horse', 'ship', 'truck')
+
+# trainsform 
+train_dataset.transform = train_transforms
+test_dataset.transform = test_transforms
+
+# dataloader 
+trainloader = DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=16)
+testloader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=16)
 
 # Model
 print('==> Building model..')
@@ -64,7 +80,6 @@ net = resnet50(weights = ResNet50_Weights.IMAGENET1K_V2) # imagenet backbone
 
 num_ftrs = net.fc.in_features   # transfer learning
 net.fc = nn.Linear(num_ftrs, 10).cuda() # transfer learning
-
 net = net.to(device)
 if device == 'cuda':
     net = torch.nn.DataParallel(net)
@@ -73,15 +88,16 @@ if device == 'cuda':
 if args.resume:
     # Load checkpoint.
     print('==> Resuming from checkpoint..')
-    assert os.path.isdir('checkpoint-onlynorm'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint-onlynorm/ckpt.pth')
+    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+    checkpoint = torch.load('./checkpoint/ckpt.pth')
     net.load_state_dict(checkpoint['net'])
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
 
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=args.lr,
-                      momentum=0.9, weight_decay=5e-4)
+criterion = nn.CrossEntropyLoss().to(device)
+# optimizer = optim.SGD(net.parameters(), lr=args.lr,
+#                       momentum=0.9, weight_decay=5e-4)
+optimizer = optim.Adam(net.parameters(), lr=args.lr)
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
 
@@ -172,7 +188,7 @@ def main():
 def wandb_integration():
     wandb.init(project="cifar10", entity="24bean")
     wandb.config = {
-    "learning_rate": 0.001,
+    "learning_rate": 0.01,
     "epochs": 200,
     "batch_size": 128
     }
