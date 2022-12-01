@@ -1,19 +1,23 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
+from torch.utils.tensorboard import SummaryWriter
 
 import torchvision
 import torchvision.transforms as transforms
+from torchvision.models import resnet50, ResNet50_Weights
 
 import os
 import argparse
 
 from model import *
+from model.Cnn import Cnn
 from utils import progress_bar
 
+import wandb
+writer = SummaryWriter() # for tensorboard
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
@@ -28,16 +32,15 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 # Data
 print('==> Preparing data..')
 transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4), # Randomly crop the image to 32x32 -> ryo takahashi, Data Augmentation using Random Image Cropping and Patching for Deep CNNs, 2019
-    transforms.RandomHorizontalFlip(), # Randomly flip the data horizontally -> Andrew G Howard, MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications, 2017
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)), # # best practice for normalization
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
 ])
 
 transform_test = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
 ])
 
 trainset = torchvision.datasets.CIFAR10(
@@ -55,10 +58,12 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer',
 
 # Model
 print('==> Building model..')
+# net = ResNet18()
+net = resnet50(weights = ResNet50_Weights.IMAGENET1K_V2) # imagenet backbone
+# net = Cnn()
 
-net = ResNet18()
-# net = SimpleDLA()
-
+num_ftrs = net.fc.in_features   # transfer learning
+net.fc = nn.Linear(num_ftrs, 10).cuda() # transfer learning
 
 net = net.to(device)
 if device == 'cuda':
@@ -68,8 +73,8 @@ if device == 'cuda':
 if args.resume:
     # Load checkpoint.
     print('==> Resuming from checkpoint..')
-    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint/ckpt.pth')
+    assert os.path.isdir('checkpoint-onlynorm'), 'Error: no checkpoint directory found!'
+    checkpoint = torch.load('./checkpoint-onlynorm/ckpt.pth')
     net.load_state_dict(checkpoint['net'])
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
@@ -82,6 +87,7 @@ scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
 # Training
 def train(epoch):
+    print("training")
     print('\nEpoch: %d' % epoch)
     net.train()
     train_loss = 0
@@ -100,11 +106,18 @@ def train(epoch):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
+        
         progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                      % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
+    wandb.log({"training loss": train_loss})
+    wandb.log({"training accuracy": correct/total})
+    writer.add_scalar('Loss/train', train_loss, epoch)
+    writer.add_scalar('Accuracy/train', correct/total, epoch)
+    
 
 def test(epoch):
+    print("validation")
     global best_acc
     net.eval()
     test_loss = 0
@@ -124,6 +137,15 @@ def test(epoch):
             progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                          % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
+    wandb.log({"test loss": test_loss})
+    wandb.log({"test accuracy": correct/total})
+    wandb.watch(net)
+    
+    # tensorboard
+    writer.add_scalar('Loss/test', test_loss, epoch)
+    writer.add_scalar('Accuracy/test', correct/total, epoch)
+    
+    
     # Save checkpoint.
     acc = 100.*correct/total
     if acc > best_acc:
@@ -139,11 +161,22 @@ def test(epoch):
         best_acc = acc
 
 def main():
+    torch.manual_seed(42)
     torch.multiprocessing.freeze_support()
     for epoch in range(start_epoch, start_epoch+200):
         train(epoch)
         test(epoch)
         scheduler.step()
+        writer.flush()
+
+def wandb_integration():
+    wandb.init(project="cifar10", entity="24bean")
+    wandb.config = {
+    "learning_rate": 0.001,
+    "epochs": 200,
+    "batch_size": 128
+    }
 
 if __name__=="__main__":
+    wandb_integration()
     main()
