@@ -1,37 +1,53 @@
 # CIFAR10
-This is ML, Seoultech Academic course, project repository
+### **various models adaption for CIFAR10 dataset**
 
-<hr>
+## **Models**
+- [x] Decision Tree
+- [x] Random Forest
+- [x] Logistic Regression
+- [x] SVM (One-vs-Rest)
+- [x] CNN (basic custom)
+- [x] ResNet18 (scratch)
+  - model/Resnet.py
+- [x] ResNet50 (pretrained)
+  - Backbone : ImagenetV2 
+  - torchvision.models
+- [x] ESRGAN
+  - srgan/esrgan/models.py
+- [ ] EfficientNet
+- add more soon
 
-Overview goes like this
+## **Dataset**
 
-* Parsing Dataset from **_torchvision_**
-* Preprocessing
-* model comparison
-  * Svm with OVR - DONE
-  * Decision tree - DONE
-  * Random forest - DONE
-  * Logistic regression - DONE
-  * Ensemble model - DONE with Random forest
-  * Neural networks
-* By metrics
-* Implementation of the model which has the greatest score
-* Apply greater model by customized class from latest sota paper and comparing with the earlier model
-* DL model
-  * VGG16 - DONE
-  * RESNET - DONE
-* Apply Wandb
+* Information : https://www.cs.toronto.edu/~kriz/cifar.html
+* shape: 
+  * training : (50000, 32, 32, 3)
+  * test : (10000, 32, 32, 3)
+* class : 10
+* example
 
-<hr>
+![dataset](https://user-images.githubusercontent.com/50198431/205570183-67128e50-be8d-4e88-9d8e-94875d7c28f9.png)
+* distribution
 
-* TODO:
-  * Clustering
-  * Apply Grey scale conversion
-  * Normalization
-  * Data Augmentation
-  * Image standardization
+![distribution](https://user-images.githubusercontent.com/50198431/205570320-ef018b2f-956d-43c3-9dee-57b4f5c3198f.png)
 
-## papers
+## Data augmentation
+- [x] RandomCrop
+- [x] RandomHorizontalFlip
+- [x] RandomVerticalFlip
+- [x] RandomRotation
+
+## Result
+* table will be here
+
+## reference papers
+
+* Ashish Vaswani, Attention is all you need, 2017(transformer)
+  * https://arxiv.org/abs/1706.03762
+
+* Lia deng, ImageNet: A Large-Scale Hierarchical Image Database, 2009
+  * https://ieeexplore.ieee.org/document/5206848
+
 * kaiming he, 2016, Deep Residual Learning for Image Recognition (ResNet)
   * https://arxiv.org/abs/1512.03385
 
