@@ -36,6 +36,9 @@
 - [x] RandomHorizontalFlip
 - [x] RandomVerticalFlip
 - [x] RandomRotation
+- [ ] super resolution
+- [x] interpolation
+* add more soon
 
 ## Result
 * table will be here
